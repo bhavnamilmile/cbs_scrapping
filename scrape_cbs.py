@@ -1,11 +1,8 @@
 
 
 import requests
-from bs4 import BeautifulSoup
 
-from urllib.request import Request, urlopen
-
-from blm_scrapper import NBCScraper
+from blm_scrapper import CBSScraper
 
 
 
@@ -115,7 +112,7 @@ def process_csv():
         data_all.append(article_data)   
         # print(data_all)
 
-    NBCScraper.save_to_csv(data_all, os.path.join(output_directory, keyword+".csv"))  
+    CBSScraper.save_to_csv(data_all, os.path.join(output_directory, keyword+".csv"))  
 
 
 if __name__ =="__main__":
