@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
+import re
 import csv
 import os
 
@@ -160,9 +161,10 @@ class CBSScraper(BLMContentScraper):
         super().__init__(html_content)
         self.headline_selector = 'h1.content__title '
         self.author_selector = 'span.byline__authors'
-        self.date_selector = 'time.datetime'
+        self.date_selector = 'time'
         self.url_selector = 'a'
-        self.date_format = '%B %d, %Y %I:%M %p ET'
+        self.date_format = "%Y-%m-%dT%H:%M:%S%z"
+
         self.output_date_format = '%m-%d-%Y'
         self.article_selector = 'article.WSJTheme--story--XB4V2mLz'
         self.description_selector = 'div.styles_articleDek__Icz5H'
@@ -179,6 +181,8 @@ class CBSScraper(BLMContentScraper):
 
         article_paras = article.select(self.body)
 
+        if len(article_paras)==0:
+            return None
 
         paragraph_selector = "p"
 
@@ -192,10 +196,11 @@ class CBSScraper(BLMContentScraper):
     def fetch_single_article(self, article, url):
         data = super().fetch_single_article(article)
         date_str = article.select_one(self.date_selector).attrs['datetime'] if article.select_one(self.date_selector) else 'DATE_NOT_FOUND'
-
+        print(data)
+        clean_headline= re.sub(r'[^a-zA-Z0-9\s]', '', data[3])
         try:
             # Parse the datetime string
-            date_time_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+            date_time_obj = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
 
             date_str = date_time_obj.strftime(self.output_date_format)
         except ValueError:
@@ -203,6 +208,7 @@ class CBSScraper(BLMContentScraper):
 
         data[1] = date_str
         data[-1] = url
+        data[3]= clean_headline
         return data
 
 

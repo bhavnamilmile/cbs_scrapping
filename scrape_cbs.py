@@ -11,7 +11,7 @@ import selenium.webdriver.support.ui as ui
 
 import pandas as pd
 
-#/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome  --user-data-dir="~/ChromeProfile1" --remote-debugging-port=9222
+#/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome  --user-data-dir="~/ChromeProfile1" --remote-debugging-port=9221
 import os
 
 from  datetime import datetime
@@ -74,13 +74,25 @@ def process_csv():
     out_dir_article_body = os.path.join(output_root, os.path.join(os.path.join(id, source)))
     os.makedirs(out_dir_article_body, exist_ok=True)
 
-
-
+    complete_df= None
+    links_list = []
+    if os.path.exists(os.path.join(output_directory, keyword+".csv")):
+        print("CSV already found, reading..")
+        complete_df = pd.read_csv(os.path.join(output_directory, keyword+".csv"))
+        print(complete_df['link'])
+        links_list = list(complete_df['link'])
 
     for ind in df.index:
-
+        
         url = df['Url'][ind]
-
+        print("processing started", url)
+        
+        if len(links_list)>0:
+            
+            if url in links_list:
+                print("Already found, not processing")
+                continue
+        
         article_str = fetch_article_html(driver, url)
 
         scraper = CBSScraper(id, article_str)
@@ -89,9 +101,13 @@ def process_csv():
 
         article_body = scraper.fetch_article_body(scraper.soup) 
 
+        if article_body is None:
+            print("Invalid article, DO NOT PROCESS")
+            continue
         date_file = article_data[1]
         headline = article_data[3]
 
+        print(date_file)
         date_obj = datetime.strptime(date_file, '%m-%d-%Y')
         date = date_obj.strftime('%B %Y')
 
@@ -110,9 +126,13 @@ def process_csv():
             f.write(article_body)
 
         data_all.append(article_data)   
+
+        print(article_data)
+
+
         # print(data_all)
 
-    CBSScraper.save_to_csv(data_all, os.path.join(output_directory, keyword+".csv"))  
+        CBSScraper.save_to_csv(data_all, os.path.join(output_directory, keyword+".csv"))  
 
 
 if __name__ =="__main__":
